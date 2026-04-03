@@ -33,7 +33,7 @@ def matches_any(pattern: str, items: List[str]) -> bool:
             return True
     return False
 
-def build_parser():
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Print and manage quotes")
 
     parser.add_argument(
