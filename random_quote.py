@@ -121,9 +121,9 @@ def main():
         for i, quote in enumerate(quotes):
             if i == int(args.remove):
                 quotes.remove(quote)
-    with open(QUOTES_PATH, 'w') as q:
-        for line in quotes:
-            q.write(f"{line[0]};;{line[1]}")
+        with open(QUOTES_PATH, 'w') as q:
+            for line in quotes:
+                q.write(f"{line[0]};;{line[1]}")
     if args.re_remove:
         to_be_kept = []
         for quote in quotes:
