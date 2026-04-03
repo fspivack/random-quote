@@ -1,0 +1,11 @@
+*.log
+*.pyc
+__pycache__/
+node_modules/
+.env
+.#*
+.~lock.*#
+*~
+quotes.txt
+allow-repeats.txt
+used-quotes.txt
