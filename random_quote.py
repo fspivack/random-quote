@@ -93,53 +93,54 @@ def main():
 
     if args.author and not args.add:
         parser.error("'--author' requires '--add'")
-    if args.field and not (args.re_list or args.re_remove):
-        parser.error("'--field requires '--re-list' or '--re-remove'")
+    # Removing this because args.field is always set
+    # if args.field and not (args.re_list or args.re_remove):
+    #     parser.error("'--field' requires '--re-list' or '--re-remove'")
 
-        if args.list_quotes:
-            for i, quote in enumerate(quotes):
-                print(format_quote(quote, i))
-        elif args.re_list:
-            for i, quote in enumerate(quotes):
-                if args.field == "quote":
-                    if matches_any(args.re_list, [quote[0]]):
-                        print(format_quote(quote, i))
-                elif args.field == "author":
-                    if matches_any(args.re_list, [quote[1]]):
-                        print(format_quote(quote, i))
-                else:
-                    if matches_any(args.re_list, quote):
-                        print(format_quote(quote, i))
+    if args.list_quotes:
+        for i, quote in enumerate(quotes):
+            print(format_quote(quote, i))
+    elif args.re_list:
+        for i, quote in enumerate(quotes):
+            if args.field == "quote":
+                if matches_any(args.re_list, [quote[0]]):
+                    print(format_quote(quote, i))
+            elif args.field == "author":
+                if matches_any(args.re_list, [quote[1]]):
+                    print(format_quote(quote, i))
+            else:
+                if matches_any(args.re_list, quote):
+                    print(format_quote(quote, i))
 
-        if args.add:
-            with open(QUOTES_PATH, 'a') as q:
-                # Note that if an author is not specified, 'args.author'
-                # is blank
-                q.write(f"{args.add};;{args.author if args.author else ''}\n")
-        if args.remove:
-            for i, quote in enumerate(quotes):
-                if i == int(args.remove):
-                    quotes.remove(quote)
+    if args.add:
+        with open(QUOTES_PATH, 'a') as q:
+            # Note that if an author is not specified, 'args.author'
+            # is blank
+            q.write(f"{args.add};;{args.author if args.author else ''}\n")
+    if args.remove:
+        for i, quote in enumerate(quotes):
+            if i == int(args.remove):
+                quotes.remove(quote)
+    with open(QUOTES_PATH, 'w') as q:
+        for line in quotes:
+            q.write(f"{line[0]};;{line[1]}")
+    if args.re_remove:
+        to_be_kept = []
+        for quote in quotes:
+            # The point of the following line is so that, if consecutive
+            # quotes are to be removed, we don't screw that up by changing
+            # the iterator
+            if args.field == "quote":
+                if not matches_any(args.re_remove, [quote[0]]):
+                    to_be_kept.append(quote)
+            elif args.field == "author":
+                if not matches_any(args.re_remove, [quote[1]]):
+                    to_be_kept.append(quote)
+            else:
+                if not matches_any(args.re_remove, quote):
+                    to_be_kept.append(quote)
         with open(QUOTES_PATH, 'w') as q:
-            for line in quotes:
-                q.write(f"{line[0]};;{line[1]}")
-        if args.re_remove:
-            to_be_kept = []
-            for quote in quotes:
-                # The point of the following line is so that, if consecutive
-                # quotes are to be removed, we don't screw that up by changing
-                # the iterator
-                if args.field == "quote":
-                    if not matches_any(args.re_remove, [quote[0]]):
-                        to_be_kept.append(quote)
-                elif args.field == "author":
-                    if not matches_any(args.re_remove, [quote[1]]):
-                        to_be_kept.append(quote)
-                else:
-                    if not matches_any(args.re_remove, quote):
-                        to_be_kept.append(quote)
-            with open(QUOTES_PATH, 'w') as q:
-                for line in to_be_kept:
+            for line in to_be_kept:
                     q.write(f"{line[0]};;{line[1]}")
 
     if args.no_repeats:
@@ -174,3 +175,6 @@ def main():
                 s.write(f"{current_quote[0]};;{current_quote[1]}")
         i = quotes.index(current_quote)
         print(format_quote(current_quote))
+
+if __name__ == "__main__":
+    main()
