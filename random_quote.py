@@ -75,7 +75,32 @@ def build_parser():
 
     return parser
 
-def main():
+def get_random_quote(quotes: List[List[str]]) -> str:
+    with open(STATEFILE_PATH, 'r') as s:
+        state = s.read()
+
+    if state == "False":
+        if not USED_QUOTES_PATH.exists():
+            # todo: Check this is the best way
+            open(USED_QUOTES_PATH, 'a').close()
+        with open(USED_QUOTES_PATH, 'r+') as s:
+            used_quotes = s.readlines()
+            used_quotes = [x.split(";;") for x in used_quotes]
+            available_quotes = [x for x in quotes if x not in used_quotes]
+            if not available_quotes:
+                # Empty the file
+                s.truncate(0)
+                available_quotes = quotes
+    else:
+        available_quotes = quotes
+    current_quote = random.choice(available_quotes)
+    if state == "False":
+        with open(USED_QUOTES_PATH, 'a') as s:
+            s.write(f"{current_quote[0]};;{current_quote[1]}")
+
+    return format_quote(current_quote)
+
+def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     
@@ -151,30 +176,8 @@ def main():
         with open(STATEFILE_PATH, 'w') as s:
             s.write("True")
 
-    with open(STATEFILE_PATH, 'r') as s:
-        state = s.read()
-
     if len(sys.argv) <= 1:
-        if state == "False":
-            if not USED_QUOTES_PATH.exists():
-                # todo: Check this is the best way
-                open(USED_QUOTES_PATH, 'a').close()
-            with open(USED_QUOTES_PATH, 'r+') as s:
-                used_quotes = s.readlines()
-                used_quotes = [x.split(";;") for x in used_quotes]
-                available_quotes = [x for x in quotes if x not in used_quotes]
-                if not available_quotes:
-                    # Empty the file
-                    s.truncate(0)
-                    available_quotes = quotes
-        else:
-            available_quotes = quotes
-        current_quote = random.choice(available_quotes)
-        if state == "False":
-            with open(USED_QUOTES_PATH, 'a') as s:
-                s.write(f"{current_quote[0]};;{current_quote[1]}")
-        i = quotes.index(current_quote)
-        print(format_quote(current_quote))
+        print(get_random_quote(quotes))
 
 if __name__ == "__main__":
     main()
