@@ -14,11 +14,17 @@ A simple CLI to pick a random quote from a collection.
 
 Clone the repository and run:
 
-```bash
-$ ./random_quote.py
+```
+python random_quote.py
 ```
 
 This will produce a random quote from the starter collection.
+
+If you're on a Unix-like system, you can also run:
+
+```
+./random_quote.py
+```
 
 ## Quote Storage
 
@@ -44,8 +50,8 @@ The included quotes are intended only as examples. Users are encouraged to curat
 
 To just print a random quote:
 
-```bash
-$ ./random_quote.py
+```
+python random_quote.py
 ```
 Output:
 ```
@@ -53,13 +59,24 @@ Output:
 ```
 
 To add the quote "This is a test", by anon, you can type:
-```bash
-$ ./random_quote.py --add "This is a test" --author "anon"
+```
+python random_quote.py --add "This is a test" --author "anon"
 ```
 
 To remove all quotes by authors starting "A", type:
-```bash
-$ ./random_quote.py --re-remove "A" --field "author"
+```
+python random_quote.py --re-remove "A" --field "author"
+```
+
+## Troubleshooting
+
+If you're getting something like:
+```
+python: command not found
+```
+you can try:
+```
+python3 random_quote.py
 ```
 
 ## License
