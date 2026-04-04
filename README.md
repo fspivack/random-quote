@@ -24,20 +24,20 @@ This will produce a random quote from the starter collection.
 
 On first run, the program copies a starter set of quotes into a local, git-ignored file.
 
-You can then freely add, remove, and modify quotes without affecting the original set.
+You can then freely add and remove quotes without affecting the original set.
 
 The included quotes are intended only as examples. Users are encouraged to curate their own collection.
 
 ## Options
 
 - **`-l` `--list-quotes`** List all quotes including their id
-- **`--re-list`** List all quote with a particular regex pattern. By default this searches the quotes. Use `--field` to specify searching `author` or `both`
+- **`--re-list`** List all quotes with a particular regex pattern. By default this searches the quotes. Use `--field` to specify searching `author` or `both`
 - **`-a`** **`--add`** Add a quote. If you do not also add an author, via the option `--author`, the author field will be left blank
 - **`--author`** Use in conjunction with `--add` to specify an author for the provided quote
 - **`-r`** **`--remove`** Remove a quote by id
 - **`--re-remove`** Remove a quote matching the regex specified. Use `--field` to specify removing according to `author` or `both`. Otherwise it will remove according to quote
 - **`--field`** Specify one of the options `quote`, `author` or `both`. This will apply the pattern supplied to option `--re-list` or `--re-remove` to the field specified. By default, it is set to `quote`
-- **`--no-repeats`** Set the program to not repeat quotes when giving random quotes. When all quotes have been cycled through, this is reset
+- **`--no-repeats`** Set the program to not repeat quotes when giving random quotes, until all quotes have been cycled through
 - **`--allow-repeats`** Set the program to allow repeats when giving random quotes. This is the default
 
 ## Examples
