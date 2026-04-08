@@ -4,6 +4,9 @@ Print and manage quotes. If executed without any arguments, the program will
 print a random quote.
 """
 
+# Copyright (c) 2026 Francesca Spivack
+# Licensed under the MIT License: https://opensource.org/licenses/MIT
+
 import random
 import argparse
 import re
