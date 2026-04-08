@@ -9,3 +9,6 @@ node_modules/
 quotes.txt
 allow-repeats.txt
 used-quotes.txt
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
