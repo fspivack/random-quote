@@ -7,13 +7,13 @@ print a random quote.
 # Copyright (c) 2026 Francesca Spivack
 # Licensed under the MIT License: https://opensource.org/licenses/MIT
 
-import random
 import argparse
+import random
 import re
-from pathlib import Path
 import shutil
-from typing import List, Optional
 import sys
+from pathlib import Path
+from typing import List, Optional
 
 QUOTES_PATH = Path(__file__).parent / "quotes.txt"
 STARTER_QUOTES_PATH = Path(__file__).parent / "starter-quotes.txt"
