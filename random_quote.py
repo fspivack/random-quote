@@ -10,7 +10,9 @@ print a random quote.
 # Note that the conversion to using json objects has resulted in an inefficient
 # way of running. This may be corrected at a later date
 
-# todo: Split into more functions
+# Conscious decision not to split 'main' into too many functions, because that
+# would require passing loads of arguments
+
 # todo: Restructure the directory
 # todo: Use proper logging
 # todo: Test with large number of quotes
@@ -40,10 +42,6 @@ def format_quote(quote: List[str], i: Optional[int] = None) -> str:
     if i is None:
         return f'"{quote[0]}" -- {quote[1]}'
     return f'id {i}: "{quote[0]}" -- {quote[1]}'
-
-def format_quote_to_json(quote: List[str], i: Optional[int] = None) -> str:
-    pass
-
 
 def matches_any(pattern: str, items: List[str]) -> bool:
     """Check if 'pattern' matches any of the items in 'items'"""
@@ -139,6 +137,14 @@ def main() -> None:
     
     parser = build_parser()
     args = parser.parse_args()
+    # Validate
+    if args.author and not args.add:
+        parser.error("'--author' requires '--add'")
+    if args.remove:
+        try:
+            int(args.remove)
+        except ValueError:
+            parser.error("Argument passed to '-r' or '--remove' must be an integer")
 
     if not STATEFILE_PATH.exists():
         with open(STATEFILE_PATH, "w") as s:
@@ -155,9 +161,6 @@ def main() -> None:
         quotes_json = json.load(q)
 
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
-
-    if args.author and not args.add:
-        parser.error("'--author' requires '--add'")
 
     if args.list_quotes:
         for i, quote in enumerate(quotes):
@@ -182,17 +185,11 @@ def main() -> None:
             json.dump(load_in_quotes(quotes), q, indent=4)
             
     if args.remove:
-        # for i, quote in enumerate(quotes):
-        #     if i == int(args.remove):
-        #         quotes.remove(quote)
-        # todo: Check if integer passed in validation function (to be written)
         i = int(args.remove)
         new_quotes_json = [x for x in quotes_json if x["id"] != i]
         # Here we recalculate the ids
         new_quotes = [[x["quote"], x["author"]] for x in new_quotes_json]
         with open(QUOTES_PATH, "w") as q:
-            ## for line in quotes:
-                ## q.write(f"{line[0]};;{line[1]}")
             json.dump(load_in_quotes(new_quotes), q, indent=4)
     if args.re_remove:
         to_be_kept = []
