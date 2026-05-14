@@ -27,14 +27,12 @@ import json
 import hashlib
 from platformdirs import user_state_dir, user_data_dir
 
-## QUOTES_PATH = Path(__file__).parent / "quotes.txt"
 STARTER_QUOTES_PATH = Path(__file__).parent / "starter-quotes.txt"
-STATEFILE_PATH = Path(__file__).parent / "allow-repeats.txt"
-USED_QUOTES_PATH = Path(__file__).parent / "used-quotes.txt"
-
-# Updated files
-QUOTES_PATH = Path(__file__).parent / "quotes.json"
-# Should we make the starter quotes file json? Decided no
+QUOTES_DIR = Path(user_data_dir("random-quote"))
+STATE_DIR = Path(user_state_dir("random-quote"))
+QUOTES_PATH = QUOTES_DIR / "quotes.json"
+STATEFILE_PATH = STATE_DIR / "allow-repeats.txt"
+USED_QUOTES_PATH = STATE_DIR / "used-quotes.txt"
 
 def format_quote(quote: List[str], i: Optional[int] = None) -> str:
     """Format a quote for printing"""
@@ -59,7 +57,7 @@ def get_quote_hash(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 def load_in_quotes(quotes: List[List[str]]) -> str:
-    # Rename the follwoing:
+    # Rename the following:
     quotes_formatted = [{
         "id": i,
         "hash": get_quote_hash(x[0]),
@@ -271,6 +269,9 @@ def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
 def main() -> None:
     # todo: Make this shorter and puts a lot of this functionality in another
     # function
+    QUOTES_DIR.mkdir(parents=True, exist_ok=True)
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    
     parser = build_parser()
     args = parser.parse_args()
 
