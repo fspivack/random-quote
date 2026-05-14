@@ -18,15 +18,15 @@ print a random quote.
 # todo: Test with large number of quotes
 
 import argparse
+import hashlib
+import json
 import random
 import re
-import shutil
 import sys
 from pathlib import Path
-from typing import List, Optional, Dict
-import json
-import hashlib
-from platformdirs import user_state_dir, user_data_dir
+from typing import Dict, List, Optional
+
+from platformdirs import user_data_dir, user_state_dir
 
 STARTER_QUOTES_PATH = Path(__file__).parent / "starter-quotes.txt"
 QUOTES_DIR = Path(user_data_dir("random-quote"))
@@ -34,6 +34,7 @@ STATE_DIR = Path(user_state_dir("random-quote"))
 QUOTES_PATH = QUOTES_DIR / "quotes.json"
 STATEFILE_PATH = STATE_DIR / "allow-repeats.txt"
 USED_QUOTES_PATH = STATE_DIR / "used-quotes.txt"
+
 
 def format_quote(quote: List[str], i: Optional[int] = None) -> str:
     """Format a quote for printing"""
@@ -43,6 +44,7 @@ def format_quote(quote: List[str], i: Optional[int] = None) -> str:
         return f'"{quote[0]}" -- {quote[1]}'
     return f'id {i}: "{quote[0]}" -- {quote[1]}'
 
+
 def matches_any(pattern: str, items: List[str]) -> bool:
     """Check if 'pattern' matches any of the items in 'items'"""
     for item in items:
@@ -50,18 +52,24 @@ def matches_any(pattern: str, items: List[str]) -> bool:
             return True
     return False
 
+
 def get_quote_hash(text):
-    return hashlib.md5(text.encode('utf-8')).hexdigest()
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
+
 
 def load_in_quotes(quotes: List[List[str]]) -> str:
     # Rename the following:
-    quotes_formatted = [{
-        "id": i,
-        "hash": get_quote_hash(x[0]),
-        "quote": x[0].strip(),
-        "author": x[1].strip()
-    } for i, x in enumerate(quotes)]
+    quotes_formatted = [
+        {
+            "id": i,
+            "hash": get_quote_hash(x[0]),
+            "quote": x[0].strip(),
+            "author": x[1].strip(),
+        }
+        for i, x in enumerate(quotes)
+    ]
     return quotes_formatted
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Print and manage quotes")
@@ -104,6 +112,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     return parser
 
+
 def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
     with open(STATEFILE_PATH, "r") as s:
         state = s.read()
@@ -115,7 +124,9 @@ def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
         with open(USED_QUOTES_PATH, "r+") as s:
             # Using 'splitlines' so that we don't have the newline chars
             used_quote_hashes = s.read().splitlines()
-            available_quotes = [x for x in quotes_json if x["hash"] not in used_quote_hashes]
+            available_quotes = [
+                x for x in quotes_json if x["hash"] not in used_quote_hashes
+            ]
             if not available_quotes:
                 # Empty the file
                 s.truncate(0)
@@ -129,12 +140,11 @@ def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
 
     return format_quote([current_quote["quote"], current_quote["author"]])
 
+
 def main() -> None:
-    # todo: Make this shorter and puts a lot of this functionality in another
-    # function
     QUOTES_DIR.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     parser = build_parser()
     args = parser.parse_args()
     # Validate
@@ -144,7 +154,9 @@ def main() -> None:
         try:
             int(args.remove)
         except ValueError:
-            parser.error("Argument passed to '-r' or '--remove' must be an integer")
+            parser.error(
+                "Argument passed to '-r' or '--remove' must be an integer"
+            )
 
     if not STATEFILE_PATH.exists():
         with open(STATEFILE_PATH, "w") as s:
@@ -183,7 +195,7 @@ def main() -> None:
             # is blank
             quotes.append([args.add, args.author if args.author else ""])
             json.dump(load_in_quotes(quotes), q, indent=4)
-            
+
     if args.remove:
         i = int(args.remove)
         new_quotes_json = [x for x in quotes_json if x["id"] != i]
@@ -219,6 +231,7 @@ def main() -> None:
 
     if len(sys.argv) <= 1:
         print(get_random_quote(quotes_json))
-        
+
+
 if __name__ == "__main__":
     main()

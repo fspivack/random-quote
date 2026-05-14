@@ -1,3 +1,19 @@
+[project]
+name = "random-quote"
+version = "0.1.0"
+description = "Print a random quote and manage your quote collection"
+authors = [
+    { name = "Francesca Spivack", email = "spivack.f@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+random-quote = "random_quote.random_quote:main"
+
 [tool.black]
 line-length = 80
 target-version = ["py311"]

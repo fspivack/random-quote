@@ -13,3 +13,4 @@ used-quotes.txt
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/
+*.egg-info/
