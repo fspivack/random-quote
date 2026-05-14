@@ -10,7 +10,6 @@ print a random quote.
 # Note that the conversion to using json objects has resulted in an inefficient
 # way of running. This may be corrected at a later date
 
-# todo: Use proper paths for files
 # todo: Split into more functions
 # todo: Restructure the directory
 # todo: Use proper logging
@@ -107,56 +106,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     return parser
 
-# def get_random_quote(quotes: List[List[str]]) -> str:
-#     with open(STATEFILE_PATH, "r") as s:
-#         state = s.read()
-
-#     if state == "False":
-#         if not USED_QUOTES_PATH.exists():
-#             # todo: Check this is the best way
-#             open(USED_QUOTES_PATH, "a").close()
-#         with open(USED_QUOTES_PATH, "r+") as s:
-#             used_quotes = s.readlines()
-#             used_quotes = [x.split(";;") for x in used_quotes]
-#             available_quotes = [x for x in quotes if x not in used_quotes]
-#             if not available_quotes:
-#                 # Empty the file
-#                 s.truncate(0)
-#                 available_quotes = quotes
-#     else:
-#         available_quotes = quotes
-#     current_quote = random.choice(available_quotes)
-#     if state == "False":
-#         with open(USED_QUOTES_PATH, "a") as s:
-#             s.write(f"{current_quote[0]};;{current_quote[1]}")
-
-#     return format_quote(current_quote)
-
-# def get_random_quote(quotes: List[List[str]]) -> str:
-#     with open(STATEFILE_PATH, "r") as s:
-#         state = s.read()
-
-#     if state == "False":
-#         if not USED_QUOTES_PATH.exists():
-#             # todo: Check this is the best way
-#             open(USED_QUOTES_PATH, "a").close()
-#         with open(USED_QUOTES_PATH, "r+") as s:
-#             used_quotes = s.readlines()
-#             used_quotes = [x.split(";;") for x in used_quotes]
-#             available_quotes = [x for x in quotes if x not in used_quotes]
-#             if not available_quotes:
-#                 # Empty the file
-#                 s.truncate(0)
-#                 available_quotes = quotes
-#     else:
-#         available_quotes = quotes
-#     current_quote = random.choice(available_quotes)
-#     if state == "False":
-#         with open(USED_QUOTES_PATH, "a") as s:
-#             s.write(f"{current_quote[0]};;{current_quote[1]}")
-
-#     return format_quote(current_quote)
-
 def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
     with open(STATEFILE_PATH, "r") as s:
         state = s.read()
@@ -166,10 +115,6 @@ def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
             # todo: Check this is the best way
             open(USED_QUOTES_PATH, "a").close()
         with open(USED_QUOTES_PATH, "r+") as s:
-            # used_quotes = s.readlines()
-            # used_quotes = [x.split(";;") for x in used_quotes]
-            # available_quotes = [x for x in quotes if x not in used_quotes]
-            ## used_quote_hashes = s.readlines()
             # Using 'splitlines' so that we don't have the newline chars
             used_quote_hashes = s.read().splitlines()
             available_quotes = [x for x in quotes_json if x["hash"] not in used_quote_hashes]
@@ -186,86 +131,6 @@ def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
 
     return format_quote([current_quote["quote"], current_quote["author"]])
 
-# def main_bak() -> None:
-#     parser = build_parser()
-#     args = parser.parse_args()
-
-#     if not STATEFILE_PATH.exists():
-#         with open(STATEFILE_PATH, "w") as s:
-#             s.write("True")
-
-#     if not QUOTES_PATH.exists():
-#         shutil.copyfile(STARTER_QUOTES_PATH, QUOTES_PATH)
-
-#     with open(QUOTES_PATH, "r") as q:
-#         quotes = q.readlines()
-
-#     quotes = [x.split(";;") for x in quotes]
-
-#     if args.author and not args.add:
-#         parser.error("'--author' requires '--add'")
-#     # Removing this because args.field is always set
-#     # if args.field and not (args.re_list or args.re_remove):
-#     #     parser.error("'--field' requires '--re-list' or '--re-remove'")
-    
-#     if args.list_quotes:
-#         for i, quote in enumerate(quotes):
-#             print(format_quote(quote, i))
-#     elif args.re_list:
-#         for i, quote in enumerate(quotes):
-#             if args.field == "quote":
-#                 if matches_any(args.re_list, [quote[0]]):
-#                     print(format_quote(quote, i))
-#             elif args.field == "author":
-#                 if matches_any(args.re_list, [quote[1]]):
-#                     print(format_quote(quote, i))
-#             else:
-#                 if matches_any(args.re_list, quote):
-#                     print(format_quote(quote, i))
-
-#     if args.add:
-#         with open(QUOTES_PATH, "a") as q:
-#             # Note that if an author is not specified, 'args.author'
-#             # is blank
-#             q.write(f"{args.add};;{args.author if args.author else ''}\n")
-            
-#     if args.remove:
-#         for i, quote in enumerate(quotes):
-#             if i == int(args.remove):
-#                 quotes.remove(quote)
-#         with open(QUOTES_PATH, "w") as q:
-#             for line in quotes:
-#                 q.write(f"{line[0]};;{line[1]}")
-#     if args.re_remove:
-#         to_be_kept = []
-#         for quote in quotes:
-#             # The point of the following line is so that, if consecutive
-#             # quotes are to be removed, we don't screw that up by changing
-#             # the iterator
-#             if args.field == "quote":
-#                 if not matches_any(args.re_remove, [quote[0]]):
-#                     to_be_kept.append(quote)
-#             elif args.field == "author":
-#                 if not matches_any(args.re_remove, [quote[1]]):
-#                     to_be_kept.append(quote)
-#             else:
-#                 if not matches_any(args.re_remove, quote):
-#                     to_be_kept.append(quote)
-#         with open(QUOTES_PATH, "w") as q:
-#             for line in to_be_kept:
-#                 q.write(f"{line[0]};;{line[1]}")
-
-#     if args.no_repeats:
-#         with open(STATEFILE_PATH, "w") as s:
-#             s.write("False")
-#             open(USED_QUOTES_PATH, "a").close()
-#     elif args.allow_repeats:
-#         with open(STATEFILE_PATH, "w") as s:
-#             s.write("True")
-
-#     if len(sys.argv) <= 1:
-#         print(get_random_quote(quotes))
-
 def main() -> None:
     # todo: Make this shorter and puts a lot of this functionality in another
     # function
@@ -280,8 +145,6 @@ def main() -> None:
             s.write("True")
 
     if not QUOTES_PATH.exists():
-        ## shutil.copyfile(STARTER_QUOTES_PATH, QUOTES_PATH)
-        # todo: Either format the starter quotes in json, or convert to json
         with open(STARTER_QUOTES_PATH, "r") as q:
             starter_quotes = q.readlines()
         starter_quotes = [x.split(";;") for x in starter_quotes]
@@ -289,17 +152,12 @@ def main() -> None:
             json.dump(load_in_quotes(starter_quotes), f, indent=4)
 
     with open(QUOTES_PATH, "r") as q:
-        ## quotes = q.readlines()
         quotes_json = json.load(q)
 
-    ## quotes = [x.split(";;") for x in quotes]
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
 
     if args.author and not args.add:
         parser.error("'--author' requires '--add'")
-    # Removing this because args.field is always set
-    # if args.field and not (args.re_list or args.re_remove):
-    #     parser.error("'--field' requires '--re-list' or '--re-remove'")
 
     if args.list_quotes:
         for i, quote in enumerate(quotes):
@@ -363,7 +221,6 @@ def main() -> None:
             s.write("True")
 
     if len(sys.argv) <= 1:
-        ## print(get_random_quote(quotes))
         print(get_random_quote(quotes_json))
         
 if __name__ == "__main__":
