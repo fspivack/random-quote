@@ -12,9 +12,9 @@ print a random quote.
 
 # Conscious decision not to split 'main' into too many functions, because that
 # would require passing loads of arguments
+# Update: May split off a few functions for unit testing
 
-# todo: Restructure the directory
-# todo: Use proper logging
+# todo: Use proper logging?
 # todo: Test with large number of quotes
 
 import argparse
@@ -58,6 +58,7 @@ def get_quote_hash(text):
 
 
 def load_in_quotes(quotes: List[List[str]]) -> str:
+    """Format quotes for storing in file"""
     # Rename the following:
     quotes_formatted = [
         {
@@ -114,6 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
+    """Select a random quote from the user's collection"""
     with open(STATEFILE_PATH, "r") as s:
         state = s.read()
 
@@ -175,9 +177,12 @@ def main() -> None:
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
 
     if args.list_quotes:
+        # todo: If separating into function, needs args: 'quotes'
         for i, quote in enumerate(quotes):
             print(format_quote(quote, i))
     elif args.re_list:
+        # todo: If separating into function, needs args: 'args' (or
+        # 'args.re_list') and 'quotes'
         for i, quote in enumerate(quotes):
             if args.field == "quote":
                 if matches_any(args.re_list, [quote[0]]):
@@ -197,6 +202,8 @@ def main() -> None:
             json.dump(load_in_quotes(quotes), q, indent=4)
 
     if args.remove:
+        # todo: If separating into function, needs args: 'args' (or
+        # 'args.remove') and 'quotes_json'
         i = int(args.remove)
         new_quotes_json = [x for x in quotes_json if x["id"] != i]
         # Here we recalculate the ids
@@ -204,6 +211,8 @@ def main() -> None:
         with open(QUOTES_PATH, "w") as q:
             json.dump(load_in_quotes(new_quotes), q, indent=4)
     if args.re_remove:
+        # todo: If separating into function, needs args: 'args' (or
+        # 'args.re_remove') and 'quotes'
         to_be_kept = []
         for quote in quotes:
             # The point of the following line is so that, if consecutive
