@@ -14,8 +14,10 @@ print a random quote.
 # would require passing loads of arguments
 # Update: May split off a few functions for unit testing
 
-# todo: Use proper logging?
+# todo: Use proper logging? Probably no need
 # todo: Test with large number of quotes
+# todo: Clean up of auto-generated files if the user wants to get rid of them?
+# todo: Decide whether to put min Py version as 3.10
 
 import argparse
 import hashlib
@@ -23,8 +25,8 @@ import json
 import random
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from platformdirs import user_data_dir, user_state_dir
 
@@ -36,7 +38,14 @@ STATEFILE_PATH = STATE_DIR / "allow-repeats.txt"
 USED_QUOTES_PATH = STATE_DIR / "used-quotes.txt"
 
 
-def format_quote(quote: List[str], i: Optional[int] = None) -> str:
+@dataclass
+class AppConfig:
+    # Putting this here so that args to main don't get too unwieldy
+    quotes_file: str | None = None
+    used_quotes_file: str | None = None
+
+
+def format_quote(quote: list[str], i: int | None = None) -> str:
     """Format a quote for printing"""
     # This should always work, unless you've edited the quotes file directly
     # Also, if there is no known author (even anon), the author is left blank
@@ -45,7 +54,7 @@ def format_quote(quote: List[str], i: Optional[int] = None) -> str:
     return f'id {i}: "{quote[0]}" -- {quote[1]}'
 
 
-def matches_any(pattern: str, items: List[str]) -> bool:
+def matches_any(pattern: str, items: list[str]) -> bool:
     """Check if 'pattern' matches any of the items in 'items'"""
     for item in items:
         if re.match(pattern, item):
@@ -57,7 +66,7 @@ def get_quote_hash(text):
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
-def load_in_quotes(quotes: List[List[str]]) -> str:
+def load_in_quotes(quotes: list[list[str]]) -> str:
     """Format quotes for storing in file"""
     # Rename the following:
     quotes_formatted = [
@@ -114,9 +123,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
+def get_random_quote(quotes_json: list[dict[str, str]]) -> str:
     """Select a random quote from the user's collection"""
-    with open(STATEFILE_PATH, "r") as s:
+    with open(STATEFILE_PATH) as s:
         state = s.read()
 
     if state == "False":
@@ -143,12 +152,16 @@ def get_random_quote(quotes_json: List[Dict[str, str]]) -> str:
     return format_quote([current_quote["quote"], current_quote["author"]])
 
 
-def main() -> None:
+def main(
+    args_overwrite: list[str] | None = None, file_overwrite: str | None = None
+) -> None:
     QUOTES_DIR.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 
+    quotes_path = Path(file_overwrite) if file_overwrite else QUOTES_PATH
+
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(args_overwrite)
     # Validate
     if args.author and not args.add:
         parser.error("'--author' requires '--add'")
@@ -164,14 +177,14 @@ def main() -> None:
         with open(STATEFILE_PATH, "w") as s:
             s.write("True")
 
-    if not QUOTES_PATH.exists():
-        with open(STARTER_QUOTES_PATH, "r") as q:
+    if not quotes_path.exists():
+        with open(STARTER_QUOTES_PATH) as q:
             starter_quotes = q.readlines()
         starter_quotes = [x.split(";;") for x in starter_quotes]
-        with open(QUOTES_PATH, "w") as f:
+        with open(quotes_path, "w") as f:
             json.dump(load_in_quotes(starter_quotes), f, indent=4)
 
-    with open(QUOTES_PATH, "r") as q:
+    with open(quotes_path) as q:
         quotes_json = json.load(q)
 
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
@@ -183,6 +196,7 @@ def main() -> None:
     elif args.re_list:
         # todo: If separating into function, needs args: 'args' (or
         # 'args.re_list') and 'quotes'
+        # Possible candidate for function
         for i, quote in enumerate(quotes):
             if args.field == "quote":
                 if matches_any(args.re_list, [quote[0]]):
@@ -195,7 +209,7 @@ def main() -> None:
                     print(format_quote(quote, i))
 
     if args.add:
-        with open(QUOTES_PATH, "w") as q:
+        with open(quotes_path, "w") as q:
             # Note that if an author is not specified, 'args.author'
             # is blank
             quotes.append([args.add, args.author if args.author else ""])
@@ -204,15 +218,17 @@ def main() -> None:
     if args.remove:
         # todo: If separating into function, needs args: 'args' (or
         # 'args.remove') and 'quotes_json'
+        # Possible candidate for function
         i = int(args.remove)
         new_quotes_json = [x for x in quotes_json if x["id"] != i]
         # Here we recalculate the ids
         new_quotes = [[x["quote"], x["author"]] for x in new_quotes_json]
-        with open(QUOTES_PATH, "w") as q:
+        with open(quotes_path, "w") as q:
             json.dump(load_in_quotes(new_quotes), q, indent=4)
     if args.re_remove:
         # todo: If separating into function, needs args: 'args' (or
         # 'args.re_remove') and 'quotes'
+        # Possible candidate for function
         to_be_kept = []
         for quote in quotes:
             # The point of the following line is so that, if consecutive
@@ -227,7 +243,7 @@ def main() -> None:
             else:
                 if not matches_any(args.re_remove, quote):
                     to_be_kept.append(quote)
-        with open(QUOTES_PATH, "w") as q:
+        with open(quotes_path, "w") as q:
             json.dump(load_in_quotes(to_be_kept), q, indent=4)
 
     if args.no_repeats:
