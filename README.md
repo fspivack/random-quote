@@ -12,18 +12,17 @@ A simple CLI to pick a random quote from a collection.
 
 ## Getting Started
 
-Clone the repository and run:
-
+First clone the repository:
 ```
-python random_quote.py
+git clone https://github.com/fspivack/random-quote.git
 ```
-
-This will produce a random quote from the starter collection.
-
-If you're on a Unix-like system, you can also run:
-
+Note that you might want to create and activate a Python virtual environment in which to install `random-quote`. Now `cd` into the cloned directory, and type:
 ```
-./random_quote.py
+pip install .
+```
+Now you can run the program by simply typing:
+```
+random-quote
 ```
 
 ## Quote Storage
@@ -51,7 +50,7 @@ The included quotes are intended only as examples. Users are encouraged to curat
 To just print a random quote:
 
 ```
-python random_quote.py
+random-quote
 ```
 Output:
 ```
@@ -60,23 +59,12 @@ Output:
 
 To add the quote "This is a test", by anon, you can type:
 ```
-python random_quote.py --add "This is a test" --author "anon"
+random-quote --add "This is a test" --author "anon"
 ```
 
 To remove all quotes by authors starting "A", type:
 ```
-python random_quote.py --re-remove "A" --field "author"
-```
-
-## Troubleshooting
-
-If you're getting something like:
-```
-python: command not found
-```
-you can try:
-```
-python3 random_quote.py
+random-quote --re-remove "A" --field "author"
 ```
 
 ## License
