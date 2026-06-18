@@ -27,6 +27,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypedDict
 
 from platformdirs import user_data_dir, user_state_dir
 
@@ -44,9 +45,13 @@ USED_QUOTES_PATH = STATE_DIR / "used-quotes.txt"
 #     quotes_file: str | None = None
 #     used_quotes_file: str | None = None
 
-# Type aliases for ease of reference
-type Quote = list[str]
-type QuoteJSON = dict[str, object]
+# Custom types for ease of reference
+Quote = list[str]
+class StoredQuote(TypedDict):
+    qid: int
+    qhash: str
+    quote: str
+    author: str
 
 def format_quote(quote: Quote, i: int | None = None) -> str:
     """Format a quote for printing"""
@@ -69,19 +74,18 @@ def get_quote_hash(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
-def load_in_quotes(quotes: list[Quote]) -> list[QuoteJSON]:
+def load_in_quotes(quotes: list[Quote]) -> list[StoredQuote]:
     """Format quotes for storing in file"""
     # Rename the following:
-    quotes_formatted = [
+    return [
         {
-            "id": i,
-            "hash": get_quote_hash(x[0]),
+            "qid": i,
+            "qhash": get_quote_hash(x[0]),
             "quote": x[0].strip(),
             "author": x[1].strip(),
         }
         for i, x in enumerate(quotes)
     ]
-    return quotes_formatted
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -126,7 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_random_quote(quotes_json: list[QuoteJSON]) -> str:
+def get_random_quote(quotes_json: list[StoredQuote]) -> str:
     """Select a random quote from the user's collection"""
     with open(STATEFILE_PATH) as s:
         state = s.read()
@@ -139,7 +143,7 @@ def get_random_quote(quotes_json: list[QuoteJSON]) -> str:
             # Using 'splitlines' so that we don't have the newline chars
             used_quote_hashes = s.read().splitlines()
             available_quotes = [
-                x for x in quotes_json if x["hash"] not in used_quote_hashes
+                x for x in quotes_json if x["qhash"] not in used_quote_hashes
             ]
             if not available_quotes:
                 # Empty the file
@@ -150,7 +154,7 @@ def get_random_quote(quotes_json: list[QuoteJSON]) -> str:
     current_quote = random.choice(available_quotes)
     if state == "False":
         with open(USED_QUOTES_PATH, "a") as s:
-            s.write(f"{current_quote['hash']}\n")
+            s.write(f"{current_quote['qhash']}\n")
 
     return format_quote([current_quote["quote"], current_quote["author"]])
 
@@ -162,8 +166,8 @@ def initialise_statefile() -> None:
 def initialise_quote_list(quotes_path: Path) -> None:
     if not quotes_path.exists():
         with open(STARTER_QUOTES_PATH) as q:
-            starter_quotes = q.readlines()
-        starter_quotes = [x.split(";;") for x in starter_quotes]
+            starter_quotes_raw = q.readlines()
+        starter_quotes = [x.split(";;") for x in starter_quotes_raw]
         with open(quotes_path, "w") as f:
             json.dump(load_in_quotes(starter_quotes), f, indent=4)
 
@@ -171,7 +175,7 @@ def ensure_directories_exist() -> None:
     QUOTES_DIR.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 
-def validate_args(args: argparse.Namespace) -> None:
+def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.author and not args.add:
         parser.error("'--author' requires '--add'")
     if args.remove:
@@ -182,7 +186,7 @@ def validate_args(args: argparse.Namespace) -> None:
                 "Argument passed to '-r' or '--remove' must be an integer"
             )
 
-def get_all_quotes(quotes_path: Path) -> list[list[str]]:
+def get_all_quotes(quotes_path: Path) -> tuple[list[Quote], list[StoredQuote]]:
     with open(quotes_path) as q:
         quotes_json = json.load(q)
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
@@ -210,9 +214,9 @@ def add_quote(quotes_path: Path, quotes: list[Quote], quote: str, author: str | 
         quotes.append([quote, author if author else ""])
         json.dump(load_in_quotes(quotes), q, indent=4)
 
-def remove_quote(quotes_path: Path, to_remove: str, quotes_json: list[QuoteJSON]) -> None:
+def remove_quote(quotes_path: Path, to_remove: str, quotes_json: list[StoredQuote]) -> None:
     i = int(to_remove)
-    new_quotes_json = [x for x in quotes_json if x["id"] != i]
+    new_quotes_json = [x for x in quotes_json if x["qid"] != i]
     # Here we recalculate the ids
     new_quotes = [[x["quote"], x["author"]] for x in new_quotes_json]
     with open(quotes_path, "w") as q:
@@ -244,7 +248,7 @@ def toggle_allow_repeats(args: argparse.Namespace) -> None:
         with open(STATEFILE_PATH, "w") as s:
             s.write("True")
 
-def print_quote(quotes_json: list[QuoteJSON]) -> None:
+def print_quote(quotes_json: list[StoredQuote]) -> None:
     # Very unsure about keeping this as a separate function!
     print(get_random_quote(quotes_json))
 
@@ -257,7 +261,7 @@ def main(
 
     parser = build_parser()
     args = parser.parse_args(args_overwrite)
-    validate_args(args)
+    validate_args(args, parser)
 
     initialise_statefile()
     initialise_quote_list(quotes_path)
