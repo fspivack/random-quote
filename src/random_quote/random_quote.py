@@ -28,10 +28,10 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
+from importlib.resources import files
 
 from platformdirs import user_data_dir, user_state_dir
 
-STARTER_QUOTES_PATH = Path(__file__).parent / "starter-quotes.txt"
 QUOTES_DIR = Path(user_data_dir("random-quote"))
 STATE_DIR = Path(user_state_dir("random-quote"))
 QUOTES_PATH = QUOTES_DIR / "quotes.json"
@@ -53,6 +53,9 @@ class StoredQuote(TypedDict):
     quote: str
     author: str
 
+def get_starter_quotes_path():
+    return files("random_quote").joinpath("starter-quotes.txt")
+    
 def format_quote(quote: Quote, i: int | None = None) -> str:
     """Format a quote for printing"""
     # This should always work, unless you've edited the quotes file directly
@@ -165,7 +168,7 @@ def initialise_statefile() -> None:
 
 def initialise_quote_list(quotes_path: Path) -> None:
     if not quotes_path.exists():
-        with open(STARTER_QUOTES_PATH) as q:
+        with get_starter_quotes_path().open() as q:
             starter_quotes_raw = q.readlines()
         starter_quotes = [x.split(";;") for x in starter_quotes_raw]
         with open(quotes_path, "w") as f:

@@ -9,11 +9,18 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["platformdirs"]
 
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools.packages.find]
 where = ["src"]
-
+    
 [project.scripts]
 random-quote = "random_quote.random_quote:main"
+
+[tool.setuptools.package-data]
+random_quote = ["starter-quotes.txt"]
 
 [tool.ruff]
 line-length = 80
