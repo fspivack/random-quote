@@ -1,5 +1,3 @@
-import tempfile
-
 from random_quote import random_quote
 
 # Realised there's not much point to this, because that's not how the program
@@ -18,4 +16,4 @@ def test_performance(tmp_path) -> list[list[str]]:
     f = tmp_path / "tmpfile.txt"
     quotes = generate_quotes()
     for quote in quotes:
-        random_quote.main(["--add", quote[0], "--author", quote[1]])
+        random_quote.main(["--add", quote[0], "--author", quote[1]], f)
