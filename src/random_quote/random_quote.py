@@ -38,11 +38,11 @@ STATEFILE_PATH = STATE_DIR / "allow-repeats.txt"
 USED_QUOTES_PATH = STATE_DIR / "used-quotes.txt"
 
 
-@dataclass
-class AppConfig:
-    # Putting this here so that args to main don't get too unwieldy
-    quotes_file: str | None = None
-    used_quotes_file: str | None = None
+# @dataclass
+# class AppConfig:
+#     # Putting this here so that args to main don't get too unwieldy
+#     quotes_file: str | None = None
+#     used_quotes_file: str | None = None
 
 
 def format_quote(quote: list[str], i: int | None = None) -> str:
@@ -62,11 +62,11 @@ def matches_any(pattern: str, items: list[str]) -> bool:
     return False
 
 
-def get_quote_hash(text):
+def get_quote_hash(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
-def load_in_quotes(quotes: list[list[str]]) -> str:
+def load_in_quotes(quotes: list[list[str]]) -> list[dict[str, str]]:
     """Format quotes for storing in file"""
     # Rename the following:
     quotes_formatted = [
@@ -151,18 +151,24 @@ def get_random_quote(quotes_json: list[dict[str, str]]) -> str:
 
     return format_quote([current_quote["quote"], current_quote["author"]])
 
+def initialise_statefile() -> None:
+    if not STATEFILE_PATH.exists():
+        with open(STATEFILE_PATH, "w") as s:
+            s.write("True")
 
-def main(
-    args_overwrite: list[str] | None = None, file_overwrite: str | None = None
-) -> None:
+def initialise_quote_list(quotes_path: Path) -> None:
+    if not quotes_path.exists():
+        with open(STARTER_QUOTES_PATH) as q:
+            starter_quotes = q.readlines()
+        starter_quotes = [x.split(";;") for x in starter_quotes]
+        with open(quotes_path, "w") as f:
+            json.dump(load_in_quotes(starter_quotes), f, indent=4)
+
+def ensure_directories_exist() -> None:
     QUOTES_DIR.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 
-    quotes_path = Path(file_overwrite) if file_overwrite else QUOTES_PATH
-
-    parser = build_parser()
-    args = parser.parse_args(args_overwrite)
-    # Validate
+def validate_args(args: argparse.Namespace) -> None:
     if args.author and not args.add:
         parser.error("'--author' requires '--add'")
     if args.remove:
@@ -173,79 +179,60 @@ def main(
                 "Argument passed to '-r' or '--remove' must be an integer"
             )
 
-    if not STATEFILE_PATH.exists():
-        with open(STATEFILE_PATH, "w") as s:
-            s.write("True")
-
-    if not quotes_path.exists():
-        with open(STARTER_QUOTES_PATH) as q:
-            starter_quotes = q.readlines()
-        starter_quotes = [x.split(";;") for x in starter_quotes]
-        with open(quotes_path, "w") as f:
-            json.dump(load_in_quotes(starter_quotes), f, indent=4)
-
+def get_all_quotes(quotes_path: Path) -> list[list[str]]:
     with open(quotes_path) as q:
         quotes_json = json.load(q)
-
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
+    return quotes, quotes_json
 
-    if args.list_quotes:
-        # todo: If separating into function, needs args: 'quotes'
-        for i, quote in enumerate(quotes):
-            print(format_quote(quote, i))
-    elif args.re_list:
-        # todo: If separating into function, needs args: 'args' (or
-        # 'args.re_list') and 'quotes'
-        # Possible candidate for function
-        for i, quote in enumerate(quotes):
-            if args.field == "quote":
-                if matches_any(args.re_list, [quote[0]]):
-                    print(format_quote(quote, i))
-            elif args.field == "author":
-                if matches_any(args.re_list, [quote[1]]):
-                    print(format_quote(quote, i))
-            else:
-                if matches_any(args.re_list, quote):
-                    print(format_quote(quote, i))
+def list_quotes(quotes: list[list[str]]) -> None:
+    for i, quote in enumerate(quotes):
+        print(format_quote(quote, i))
 
-    if args.add:
-        with open(quotes_path, "w") as q:
-            # Note that if an author is not specified, 'args.author'
-            # is blank
-            quotes.append([args.add, args.author if args.author else ""])
-            json.dump(load_in_quotes(quotes), q, indent=4)
+def re_list_quotes(quotes: list[list[str]], pattern: str, field: str) -> None:
+    for i, quote in enumerate(quotes):
+        if field == "quote":
+            if matches_any(pattern, [quote[0]]):
+                print(format_quote(quote, i))
+        elif field == "author":
+            if matches_any(pattern, [quote[1]]):
+                print(format_quote(quote, i))
+        else:
+            if matches_any(pattern, quote):
+                print(format_quote(quote, i))
 
-    if args.remove:
-        # todo: If separating into function, needs args: 'args' (or
-        # 'args.remove') and 'quotes_json'
-        # Possible candidate for function
-        i = int(args.remove)
-        new_quotes_json = [x for x in quotes_json if x["id"] != i]
-        # Here we recalculate the ids
-        new_quotes = [[x["quote"], x["author"]] for x in new_quotes_json]
-        with open(quotes_path, "w") as q:
-            json.dump(load_in_quotes(new_quotes), q, indent=4)
-    if args.re_remove:
-        # todo: If separating into function, needs args: 'args' (or
-        # 'args.re_remove') and 'quotes'
-        # Possible candidate for function
-        to_be_kept = []
-        for quote in quotes:
-            # The point of the following line is so that, if consecutive
-            # quotes are to be removed, we don't screw that up by changing
-            # the iterator
-            if args.field == "quote":
-                if not matches_any(args.re_remove, [quote[0]]):
-                    to_be_kept.append(quote)
-            elif args.field == "author":
-                if not matches_any(args.re_remove, [quote[1]]):
-                    to_be_kept.append(quote)
-            else:
-                if not matches_any(args.re_remove, quote):
-                    to_be_kept.append(quote)
-        with open(quotes_path, "w") as q:
-            json.dump(load_in_quotes(to_be_kept), q, indent=4)
+def add_quote(quotes_path: Path, quotes: list[list[str]], quote: str, author: str | None = None) -> None:
+    with open(quotes_path, "w") as q:
+        # Note that if an author is not specified, 'author' is blank
+        quotes.append([quote, author if author else ""])
+        json.dump(load_in_quotes(quotes), q, indent=4)
 
+def remove_quote(quotes_path: Path, to_remove: str, quotes_json: list[dict[str, str]]) -> None:
+    i = int(to_remove)
+    new_quotes_json = [x for x in quotes_json if x["id"] != i]
+    # Here we recalculate the ids
+    new_quotes = [[x["quote"], x["author"]] for x in new_quotes_json]
+    with open(quotes_path, "w") as q:
+        json.dump(load_in_quotes(new_quotes), q, indent=4)
+
+def re_remove_quote(quotes_path: Path, quotes: list[list[str]], pattern: str, field: str) -> None:
+    # The point of the following line is so that, if consecutive quotes are to
+    # be removed, we don't screw that up by changing the iterator
+    to_be_kept = []
+    for quote in quotes:
+        if field == "quote":
+            if not matches_any(pattern, [quote[0]]):
+                to_be_kept.append(quote)
+        elif field == "author":
+            if not matches_any(pattern, [quote[1]]):
+                to_be_kept.append(quote)
+        else:
+            if not matches_any(pattern, quote):
+                to_be_kept.append(quote)
+    with open(quotes_path, "w") as q:
+        json.dump(load_in_quotes(to_be_kept), q, indent=4)    
+
+def toggle_allow_repeats(args: argparse.Namespace) -> None:
     if args.no_repeats:
         with open(STATEFILE_PATH, "w") as s:
             s.write("False")
@@ -254,9 +241,44 @@ def main(
         with open(STATEFILE_PATH, "w") as s:
             s.write("True")
 
-    if len(sys.argv) <= 1:
-        print(get_random_quote(quotes_json))
+def print_quote(quotes_json: list[dict[str, str]]) -> None:
+    # Very unsure about keeping this as a separate function!
+    print(get_random_quote(quotes_json))
 
+def main(
+    args_overwrite: list[str] | None = None, file_overwrite: str | None = None
+) -> None:
+    ensure_directories_exist()
+
+    quotes_path = Path(file_overwrite) if file_overwrite else QUOTES_PATH
+
+    parser = build_parser()
+    args = parser.parse_args(args_overwrite)
+    validate_args(args)
+
+    initialise_statefile()
+    initialise_quote_list(quotes_path)
+
+    quotes, quotes_json = get_all_quotes(quotes_path)
+    
+    if args.list_quotes:
+        list_quotes(quotes)
+    elif args.re_list:
+        re_list_quotes(quotes, args.re_list, args.field)
+
+    if args.add:
+        add_quote(quotes_path, quotes, args.add, args.author)
+
+    if args.remove:
+        remove_quote(quotes_path, args.remove, quotes_json)
+        
+    if args.re_remove:
+        re_remove_quote(quotes_path, quotes, args.re_remove, args.field)
+
+    toggle_allow_repeats(args)
+
+    if len(sys.argv) <= 1:
+        print_quote(quotes_json)
 
 if __name__ == "__main__":
     main()
