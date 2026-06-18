@@ -44,8 +44,11 @@ USED_QUOTES_PATH = STATE_DIR / "used-quotes.txt"
 #     quotes_file: str | None = None
 #     used_quotes_file: str | None = None
 
+# Type aliases for ease of reference
+type Quote = list[str]
+type QuoteJSON = dict[str, object]
 
-def format_quote(quote: list[str], i: int | None = None) -> str:
+def format_quote(quote: Quote, i: int | None = None) -> str:
     """Format a quote for printing"""
     # This should always work, unless you've edited the quotes file directly
     # Also, if there is no known author (even anon), the author is left blank
@@ -66,7 +69,7 @@ def get_quote_hash(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
 
-def load_in_quotes(quotes: list[list[str]]) -> list[dict[str, str]]:
+def load_in_quotes(quotes: list[Quote]) -> list[QuoteJSON]:
     """Format quotes for storing in file"""
     # Rename the following:
     quotes_formatted = [
@@ -123,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_random_quote(quotes_json: list[dict[str, str]]) -> str:
+def get_random_quote(quotes_json: list[QuoteJSON]) -> str:
     """Select a random quote from the user's collection"""
     with open(STATEFILE_PATH) as s:
         state = s.read()
@@ -185,11 +188,11 @@ def get_all_quotes(quotes_path: Path) -> list[list[str]]:
     quotes = [[x["quote"], x["author"]] for x in quotes_json]
     return quotes, quotes_json
 
-def list_quotes(quotes: list[list[str]]) -> None:
+def list_quotes(quotes: list[Quote]) -> None:
     for i, quote in enumerate(quotes):
         print(format_quote(quote, i))
 
-def re_list_quotes(quotes: list[list[str]], pattern: str, field: str) -> None:
+def re_list_quotes(quotes: list[Quote], pattern: str, field: str) -> None:
     for i, quote in enumerate(quotes):
         if field == "quote":
             if matches_any(pattern, [quote[0]]):
@@ -201,13 +204,13 @@ def re_list_quotes(quotes: list[list[str]], pattern: str, field: str) -> None:
             if matches_any(pattern, quote):
                 print(format_quote(quote, i))
 
-def add_quote(quotes_path: Path, quotes: list[list[str]], quote: str, author: str | None = None) -> None:
+def add_quote(quotes_path: Path, quotes: list[Quote], quote: str, author: str | None = None) -> None:
     with open(quotes_path, "w") as q:
         # Note that if an author is not specified, 'author' is blank
         quotes.append([quote, author if author else ""])
         json.dump(load_in_quotes(quotes), q, indent=4)
 
-def remove_quote(quotes_path: Path, to_remove: str, quotes_json: list[dict[str, str]]) -> None:
+def remove_quote(quotes_path: Path, to_remove: str, quotes_json: list[QuoteJSON]) -> None:
     i = int(to_remove)
     new_quotes_json = [x for x in quotes_json if x["id"] != i]
     # Here we recalculate the ids
@@ -215,7 +218,7 @@ def remove_quote(quotes_path: Path, to_remove: str, quotes_json: list[dict[str, 
     with open(quotes_path, "w") as q:
         json.dump(load_in_quotes(new_quotes), q, indent=4)
 
-def re_remove_quote(quotes_path: Path, quotes: list[list[str]], pattern: str, field: str) -> None:
+def re_remove_quote(quotes_path: Path, quotes: list[Quote], pattern: str, field: str) -> None:
     # The point of the following line is so that, if consecutive quotes are to
     # be removed, we don't screw that up by changing the iterator
     to_be_kept = []
@@ -241,7 +244,7 @@ def toggle_allow_repeats(args: argparse.Namespace) -> None:
         with open(STATEFILE_PATH, "w") as s:
             s.write("True")
 
-def print_quote(quotes_json: list[dict[str, str]]) -> None:
+def print_quote(quotes_json: list[QuoteJSON]) -> None:
     # Very unsure about keeping this as a separate function!
     print(get_random_quote(quotes_json))
 
