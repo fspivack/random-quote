@@ -27,7 +27,7 @@ random-quote
 
 ## Quote Storage
 
-On first run, the program copies a starter set of quotes into a local, git-ignored file.
+On first run, the program copies a starter set of quotes into a collection.
 
 You can then freely add and remove quotes without affecting the original set.
 
