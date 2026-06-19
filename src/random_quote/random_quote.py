@@ -283,7 +283,7 @@ def print_quote(quotes_json: list[StoredQuote]) -> None:
 
 
 def main(
-    args_overwrite: list[str] | None = None, file_overwrite: str | None = None
+    args_overwrite: list[str] | None = None, file_overwrite: Path | None = None
 ) -> None:
     ensure_directories_exist()
 

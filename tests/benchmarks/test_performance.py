@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from random_quote import random_quote
 
 # Realised there's not much point to this, because that's not how the program
@@ -7,12 +9,12 @@ from random_quote import random_quote
 NUMBER_OF_QUOTES = 1000
 
 
-def generate_quotes() -> list[list[list[str]]]:
+def generate_quotes() -> list[list[str]]:
     quotes = [[f"Quote {i}", f"Author {i}"] for i in range(NUMBER_OF_QUOTES)]
     return quotes
 
 
-def test_performance(tmp_path) -> list[list[str]]:
+def test_performance(tmp_path: Path) -> None:
     f = tmp_path / "tmpfile.txt"
     quotes = generate_quotes()
     for quote in quotes:
